@@ -1,151 +1,514 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Cricket Reaction Grid Pro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
-body{
-    font-family:Arial,Helvetica,sans-serif;
-    text-align:center;
-    background:#0f172a;
-    color:#fff;
-    margin:0;
-    padding:20px;
+:root{
+  --bg:#080d1a;
+  --surface:#111827;
+  --surface2:#1e293b;
+  --border:#2d3f56;
+  --accent:#f97316;
+  --player:#3b82f6;
+  --low:#facc15;
+  --medium:#fb923c;
+  --high:#ef4444;
+  --text:#f1f5f9;
+  --muted:#94a3b8;
 }
-h1{margin-bottom:10px}
-#controls{margin-bottom:10px}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{
+  font-family:'Rajdhani',Arial,sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  padding:20px 16px 32px;
+}
+
+/* ── Header ── */
+header{text-align:center;margin-bottom:18px;}
+header h1{
+  font-size:clamp(1.6rem,5vw,2.4rem);
+  font-weight:700;
+  letter-spacing:1px;
+  background:linear-gradient(135deg,#f97316,#facc15);
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+  background-clip:text;
+}
+header p{color:var(--muted);font-size:.9rem;margin-top:4px;}
+
+/* ── Controls card ── */
+#controls-card{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:16px;
+  padding:16px 20px;
+  width:100%;
+  max-width:520px;
+  margin-bottom:14px;
+}
+.controls-row{
+  display:flex;
+  flex-wrap:wrap;
+  align-items:flex-end;
+  justify-content:center;
+  gap:10px;
+}
+.ctrl-group{display:flex;flex-direction:column;gap:4px;}
+.ctrl-label{
+  font-size:.68rem;
+  text-transform:uppercase;
+  letter-spacing:1px;
+  color:var(--muted);
+  font-weight:600;
+}
+select,input[type=number]{
+  background:var(--surface2);
+  color:var(--text);
+  border:1px solid var(--border);
+  border-radius:8px;
+  padding:8px 10px;
+  font-size:14px;
+  font-family:inherit;
+  font-weight:600;
+}
+input#ballCount{width:74px;}
+select:focus,input:focus{outline:2px solid var(--accent);outline-offset:1px;}
+
+/* ── Buttons ── */
+.btn{
+  padding:9px 22px;
+  border:none;
+  border-radius:10px;
+  font-size:15px;
+  font-family:inherit;
+  font-weight:700;
+  cursor:pointer;
+  letter-spacing:.5px;
+  transition:transform .1s,box-shadow .15s;
+}
+.btn:active{transform:scale(.96);}
+.btn-start{
+  background:linear-gradient(135deg,#f97316,#ea580c);
+  color:#fff;
+  box-shadow:0 4px 18px rgba(249,115,22,.35);
+}
+.btn-start:hover{box-shadow:0 4px 26px rgba(249,115,22,.55);}
+.btn-stop{
+  background:var(--surface2);
+  color:var(--muted);
+  border:1px solid var(--border);
+}
+.btn-stop:hover{color:var(--text);border-color:var(--high);}
+
+/* ── Progress ── */
+#progress-wrap{
+  width:100%;
+  max-width:520px;
+  margin-bottom:8px;
+  visibility:hidden;
+}
+#progress-wrap.visible{visibility:visible;}
+#progress-bar-bg{
+  background:var(--surface2);
+  border-radius:999px;
+  height:6px;
+  overflow:hidden;
+}
+#progress-bar{
+  height:100%;
+  background:linear-gradient(90deg,#f97316,#facc15);
+  border-radius:999px;
+  width:0%;
+  transition:width .3s ease;
+}
+#counter{
+  font-size:.78rem;
+  color:var(--muted);
+  text-align:right;
+  margin-top:4px;
+  font-weight:600;
+  letter-spacing:.5px;
+  min-height:1.1em;
+}
+
+/* ── Stats ── */
+#stats{
+  display:flex;
+  gap:8px;
+  width:100%;
+  max-width:520px;
+  margin-bottom:14px;
+}
+.stat-card{
+  flex:1;
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:10px 4px;
+  text-align:center;
+}
+.stat-value{font-size:1.5rem;font-weight:700;line-height:1;}
+.stat-label{font-size:.62rem;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);margin-top:3px;}
+.stat-low  .stat-value{color:var(--low);}
+.stat-med  .stat-value{color:var(--medium);}
+.stat-high .stat-value{color:var(--high);}
+
+/* ── Grid wrapper with axis labels ── */
+#grid-wrap{
+  width:100%;
+  max-width:520px;
+  display:grid;
+  grid-template-columns:32px 1fr;
+  grid-template-rows:auto 1fr;
+}
+#col-labels{
+  grid-column:2;grid-row:1;
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:8px;
+  margin-bottom:5px;
+  padding:0 2px;
+}
+#row-labels{
+  grid-column:1;grid-row:2;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  padding:2px 0;
+}
+.axis-label{
+  font-size:.6rem;
+  text-transform:uppercase;
+  letter-spacing:.5px;
+  color:var(--muted);
+  font-weight:600;
+  text-align:center;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+.row-axis{flex:1;font-size:.55rem;}
+
+/* ── Grid ── */
 #grid{
-    display:grid;
-    grid-template-columns:repeat(3,1fr);
-    grid-template-rows:repeat(3,1fr);
-    gap:8px;
-    justify-content:center;
-    margin:20px auto;
-    max-width:500px;
+  grid-column:2;grid-row:2;
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  grid-template-rows:repeat(3,1fr);
+  gap:8px;
 }
 .cell{
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    border:2px solid #334155;
-    border-radius:8px;
-    font-size:4vw;
-    background:#1e293b;
-    transition:.2s;
-    font-weight:bold;
-    aspect-ratio:1/1;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  border:1.5px solid var(--border);
+  border-radius:12px;
+  background:var(--surface2);
+  transition:transform .15s,box-shadow .2s,background .2s,border-color .2s;
+  font-weight:700;
+  aspect-ratio:1/1;
+  position:relative;
+  overflow:hidden;
 }
-.player{background:#3b82f6;}
-.low{background:#facc15;color:#000;box-shadow:0 0 20px #facc15;}
-.medium{background:#fb923c;color:#000;box-shadow:0 0 20px #fb923c;}
-.high{background:#ef4444;color:#fff;box-shadow:0 0 20px #ef4444;}
-select,button,input{
-    padding:8px 12px;
-    margin:5px;
-    border-radius:6px;
-    border:none;
-    font-size:14px;
+.cell::after{
+  content:'';
+  position:absolute;
+  inset:0;
+  border-radius:inherit;
+  background:radial-gradient(circle at center,rgba(255,255,255,.07),transparent 70%);
+  opacity:0;
+  transition:opacity .2s;
 }
-button{background:#f97316;color:#fff;cursor:pointer;}
-#counter{margin-top:10px;font-size:18px;font-weight:bold;}
-@media(max-width:500px){
-    #grid{max-width:90vw}
-    .cell{font-size:6vw}
+.cell-label{
+  display:block;
+  font-size:clamp(14px,3.5vw,22px);
+  line-height:1;
+}
+.height-label{
+  display:block;
+  font-size:clamp(7px,1.3vw,11px);
+  letter-spacing:1px;
+  opacity:0;
+  margin-top:3px;
+  transition:opacity .15s;
+}
+/* Active delivery */
+.cell.active{transform:scale(1.07);z-index:2;}
+.cell.active::after{opacity:1;}
+.cell.active .height-label{opacity:1;}
+
+.cell.low{
+  background:#3a1c02;
+  border-color:var(--low);
+  box-shadow:0 0 26px rgba(250,204,21,.5),inset 0 0 14px rgba(250,204,21,.08);
+  color:var(--low);
+}
+.cell.medium{
+  background:#3a1002;
+  border-color:var(--medium);
+  box-shadow:0 0 26px rgba(251,146,60,.5),inset 0 0 14px rgba(251,146,60,.08);
+  color:var(--medium);
+}
+.cell.high{
+  background:#3a0404;
+  border-color:var(--high);
+  box-shadow:0 0 26px rgba(239,68,68,.5),inset 0 0 14px rgba(239,68,68,.08);
+  color:var(--high);
+}
+.cell.player{
+  background:#0c1e3d;
+  border-color:var(--player);
+  border-style:dashed;
+}
+.cell.player .cell-label{color:var(--player);}
+
+/* ── Session complete banner ── */
+#banner{
+  display:none;
+  margin-top:16px;
+  width:100%;
+  max-width:520px;
+  background:linear-gradient(135deg,#052e16,#14532d);
+  border:1px solid #16a34a;
+  border-radius:14px;
+  padding:18px 16px;
+  text-align:center;
+}
+#banner.visible{display:block;}
+#banner h2{font-size:1.3rem;color:#4ade80;margin-bottom:6px;}
+#banner p{font-size:.9rem;color:#86efac;}
+
+/* ── Keyboard hint ── */
+#kb-hint{
+  margin-top:14px;
+  font-size:.7rem;
+  color:var(--muted);
+  opacity:.6;
+}
+kbd{
+  background:var(--surface2);
+  border:1px solid var(--border);
+  border-radius:4px;
+  padding:1px 6px;
+  font-family:inherit;
+}
+
+@media(max-width:480px){
+  .cell-label{font-size:clamp(14px,5.5vw,20px);}
+  .height-label{font-size:clamp(7px,2.1vw,10px);}
+  #grid-wrap{grid-template-columns:26px 1fr;}
+  .axis-label{font-size:.5rem;}
+  .row-axis{font-size:.48rem;}
 }
 </style>
 </head>
 <body>
-<h1>Cricket Practice Reaction Grid</h1>
-<div id='controls'>
-Speed:
-<select id='speed'>
-<option value='3000'>Slow</option>
-<option value='2000'>Medium</option>
-<option value='1000'>Fast</option>
-<option value='500'>Super Fast</option>
-<option value='random'>Random</option>
-</select>
-Balls:
-<input type='number' id='ballCount' value='50' min='1' style='width:70px'>
-<button onclick='startSession()'>Start Session</button>
-<button onclick='stopSession()'>Stop Session</button>
+
+<header>
+  <h1>🏏 Cricket Reaction Grid</h1>
+  <p>Train your footwork &amp; shot selection</p>
+</header>
+
+<div id="controls-card">
+  <div class="controls-row">
+    <div class="ctrl-group">
+      <span class="ctrl-label">Delivery Speed</span>
+      <select id="speed">
+        <option value="3000">🐢 Slow</option>
+        <option value="2000">🚶 Medium</option>
+        <option value="1000" selected>🏃 Fast</option>
+        <option value="500">⚡ Super Fast</option>
+        <option value="random">🎲 Random</option>
+      </select>
+    </div>
+    <div class="ctrl-group">
+      <span class="ctrl-label">Balls in Session</span>
+      <input type="number" id="ballCount" value="20" min="1" max="200">
+    </div>
+    <button class="btn btn-start" onclick="startSession()">▶ Start</button>
+    <button class="btn btn-stop"  onclick="stopSession()">■ Stop</button>
+  </div>
 </div>
-<div id='counter'></div>
-<div id='grid'></div>
+
+<div id="progress-wrap">
+  <div id="progress-bar-bg"><div id="progress-bar"></div></div>
+  <div id="counter"></div>
+</div>
+
+<div id="stats">
+  <div class="stat-card stat-low">
+    <div class="stat-value" id="stat-low">0</div>
+    <div class="stat-label">🟡 Low</div>
+  </div>
+  <div class="stat-card stat-med">
+    <div class="stat-value" id="stat-med">0</div>
+    <div class="stat-label">🟠 Medium</div>
+  </div>
+  <div class="stat-card stat-high">
+    <div class="stat-value" id="stat-high">0</div>
+    <div class="stat-label">🔴 High</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-value" id="stat-total">0</div>
+    <div class="stat-label">⚪ Total</div>
+  </div>
+</div>
+
+<div id="grid-wrap">
+  <div></div>
+  <div id="col-labels">
+    <div class="axis-label">Off</div>
+    <div class="axis-label">Middle</div>
+    <div class="axis-label">Leg</div>
+  </div>
+  <div id="row-labels">
+    <div class="axis-label row-axis">Full</div>
+    <div class="axis-label row-axis">Length</div>
+    <div class="axis-label row-axis">Short</div>
+  </div>
+  <div id="grid"></div>
+</div>
+
+<div id="banner">
+  <h2>✅ Session Complete!</h2>
+  <p id="banner-text"></p>
+</div>
+
+<p id="kb-hint"><kbd>Space</kbd> to start / stop</p>
 
 <script>
 const cols=['A','B','C'];
 const rows=['1','2','3'];
-const grid=document.getElementById('grid');
+const gridEl=document.getElementById('grid');
 let cells={};
 
-// Create grid cells
+// Build grid — B2 is the centre/player cell
 rows.forEach(r=>{
-    cols.forEach(c=>{
-        let id=c+r;
-        let div=document.createElement('div');
-        div.className='cell';
-        div.id=id;
-        div.innerText=id;
-        if(id==='B1') div.classList.add('player');
-        grid.appendChild(div);
-        cells[id]=div;
-    });
+  cols.forEach(c=>{
+    let id=c+r;
+    let div=document.createElement('div');
+    div.className='cell';
+    div.id=id;
+    div.innerHTML='<span class="cell-label">'+id+'</span><span class="height-label"></span>';
+    if(id==='B2') div.classList.add('player');
+    gridEl.appendChild(div);
+    cells[id]=div;
+  });
 });
 
 let interval=null;
+let sessionTotal=0, sessionDelivered=0;
+let counts={low:0,medium:0,high:0};
 
 function getSpeed(){
-    let s=document.getElementById('speed').value;
-    if(s==='random'){
-        let speeds=[500,1000,2000,3000];
-        return speeds[Math.floor(Math.random()*speeds.length)];
-    }
-    return parseInt(s);
+  let s=document.getElementById('speed').value;
+  if(s==='random'){
+    let speeds=[500,1000,2000,3000];
+    return speeds[Math.floor(Math.random()*speeds.length)];
+  }
+  return parseInt(s);
+}
+
+function updateStats(){
+  document.getElementById('stat-low').innerText=counts.low;
+  document.getElementById('stat-med').innerText=counts.medium;
+  document.getElementById('stat-high').innerText=counts.high;
+  document.getElementById('stat-total').innerText=sessionDelivered;
 }
 
 function startSession(){
-    clearInterval(interval);
-    let total=parseInt(document.getElementById('ballCount').value);
-    let delivered=0;
-    document.getElementById('counter').innerText='Balls Remaining: '+total;
-    interval=setInterval(()=>{
-        if(delivered>=total){
-            clearInterval(interval);
-            clearGrid();
-            document.getElementById('counter').innerText='Session Complete';
-            return;
-        }
-        deliverBall();
-        delivered++;
-        document.getElementById('counter').innerText='Balls Remaining: '+(total-delivered);
-    }, getSpeed());
+  clearInterval(interval);
+  hideBanner();
+  sessionTotal=parseInt(document.getElementById('ballCount').value)||20;
+  sessionDelivered=0;
+  counts={low:0,medium:0,high:0};
+  updateStats();
+  document.getElementById('progress-wrap').classList.add('visible');
+  setProgress(0);
+  setCounter('Balls Remaining: '+sessionTotal);
+  interval=setInterval(()=>{
+    if(sessionDelivered>=sessionTotal){
+      clearInterval(interval);
+      interval=null;
+      clearGrid();
+      setProgress(100);
+      setCounter('Session Complete');
+      showBanner();
+      return;
+    }
+    deliverBall();
+    sessionDelivered++;
+    let rem=sessionTotal-sessionDelivered;
+    setProgress((sessionDelivered/sessionTotal)*100);
+    setCounter('Balls Remaining: '+rem);
+    updateStats();
+  }, getSpeed());
 }
 
 function stopSession(){
-    clearInterval(interval);
-    clearGrid();
-    document.getElementById('counter').innerText='Session Stopped';
+  clearInterval(interval);
+  interval=null;
+  clearGrid();
+  setCounter('Session Stopped');
 }
 
 function deliverBall(){
-    clearGrid();
-    let options=Object.keys(cells).filter(c=>c!=='B1');
-    let randomCell=options[Math.floor(Math.random()*options.length)];
-    let heights=['low','medium','high'];
-    let h=heights[Math.floor(Math.random()*heights.length)];
-    cells[randomCell].classList.add(h);
-    cells[randomCell].innerText=h.toUpperCase();
+  clearGrid();
+  let options=Object.keys(cells).filter(c=>c!=='B2');
+  let randomCell=options[Math.floor(Math.random()*options.length)];
+  let heights=['low','medium','high'];
+  let h=heights[Math.floor(Math.random()*heights.length)];
+  counts[h]++;
+  let el=cells[randomCell];
+  el.classList.add(h,'active');
+  el.querySelector('.cell-label').innerText=randomCell;
+  el.querySelector('.height-label').innerText=h.toUpperCase();
 }
 
 function clearGrid(){
-    Object.values(cells).forEach(c=>{
-        c.className='cell';
-        c.innerText=c.id;
-        if(c.id==='B1') c.classList.add('player');
-    });
+  Object.values(cells).forEach(c=>{
+    c.className='cell';
+    c.querySelector('.cell-label').innerText=c.id;
+    c.querySelector('.height-label').innerText='';
+    if(c.id==='B2') c.classList.add('player');
+  });
 }
+
+function setProgress(pct){
+  document.getElementById('progress-bar').style.width=pct+'%';
+}
+
+function setCounter(text){
+  document.getElementById('counter').innerText=text;
+}
+
+function showBanner(){
+  document.getElementById('banner').classList.add('visible');
+  document.getElementById('banner-text').innerText=
+    sessionTotal+' balls — Low: '+counts.low+', Medium: '+counts.medium+', High: '+counts.high;
+}
+
+function hideBanner(){
+  document.getElementById('banner').classList.remove('visible');
+}
+
+// Space bar shortcut: start if idle, stop if running (ignore when typing in inputs)
+document.addEventListener('keydown',e=>{
+  if(e.code==='Space'&&!['INPUT','SELECT','TEXTAREA','BUTTON'].includes(e.target.tagName)){
+    e.preventDefault();
+    if(interval) stopSession(); else startSession();
+  }
+});
 </script>
 </body>
 </html>
