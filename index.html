@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -88,7 +88,7 @@ rows.forEach(r=>{
         div.className='cell';
         div.id=id;
         div.innerText=id;
-        if(id==='B1') div.classList.add('player');
+        if(id==='B2') div.classList.add('player');
         grid.appendChild(div);
         cells[id]=div;
     });
@@ -106,13 +106,13 @@ function getSpeed(){
 }
 
 function startSession(){
-    clearInterval(interval);
+    clearTimeout(interval);
     let total=parseInt(document.getElementById('ballCount').value);
     let delivered=0;
     document.getElementById('counter').innerText='Balls Remaining: '+total;
-    interval=setInterval(()=>{
+    function deliverNext(){
         if(delivered>=total){
-            clearInterval(interval);
+            interval=null;
             clearGrid();
             document.getElementById('counter').innerText='Session Complete';
             return;
@@ -120,18 +120,20 @@ function startSession(){
         deliverBall();
         delivered++;
         document.getElementById('counter').innerText='Balls Remaining: '+(total-delivered);
-    }, getSpeed());
+        interval=setTimeout(deliverNext,getSpeed());
+    }
+    interval=setTimeout(deliverNext,getSpeed());
 }
 
 function stopSession(){
-    clearInterval(interval);
+    clearTimeout(interval);
     clearGrid();
     document.getElementById('counter').innerText='Session Stopped';
 }
 
 function deliverBall(){
     clearGrid();
-    let options=Object.keys(cells).filter(c=>c!=='B1');
+    let options=Object.keys(cells).filter(c=>c!=='B2');
     let randomCell=options[Math.floor(Math.random()*options.length)];
     let heights=['low','medium','high'];
     let h=heights[Math.floor(Math.random()*heights.length)];
@@ -143,7 +145,7 @@ function clearGrid(){
     Object.values(cells).forEach(c=>{
         c.className='cell';
         c.innerText=c.id;
-        if(c.id==='B1') c.classList.add('player');
+        if(c.id==='B2') c.classList.add('player');
     });
 }
 </script>
