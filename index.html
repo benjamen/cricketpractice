@@ -60,10 +60,10 @@ button{background:#f97316;color:#fff;cursor:pointer;}
 <div id='controls'>
 Speed:
 <select id='speed'>
-<option value='3000'>Slow</option>
-<option value='2000'>Medium</option>
-<option value='1000'>Fast</option>
-<option value='500'>Super Fast</option>
+<option value='6000'>Slow</option>
+<option value='4000'>Medium</option>
+<option value='2000'>Fast</option>
+<option value='1000'>Super Fast</option>
 <option value='random'>Random</option>
 </select>
 Balls:
@@ -99,7 +99,7 @@ let interval=null;
 function getSpeed(){
     let s=document.getElementById('speed').value;
     if(s==='random'){
-        let speeds=[500,1000,2000,3000];
+        let speeds=[1000,2000,4000,6000];
         return speeds[Math.floor(Math.random()*speeds.length)];
     }
     return parseInt(s);
