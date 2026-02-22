@@ -26,16 +26,24 @@ h1{margin-bottom:10px}
 }
 .cell{
     display:flex;
+    flex-direction:column;
     align-items:center;
     justify-content:center;
     border:2px solid #334155;
     border-radius:8px;
-    font-size:4vw;
+    font-size:14px;
     background:#1e293b;
     transition:.2s;
     font-weight:bold;
     aspect-ratio:1/1;
+    overflow:hidden;
+    min-width:0;
+    min-height:0;
 }
+.cell .cell-id{font-size:clamp(10px,2.5vw,16px);opacity:.7;line-height:1.2;}
+.cell .cell-arrow{font-size:clamp(20px,6vw,48px);line-height:1;margin:2px 0;}
+.cell .cell-label{font-size:clamp(8px,1.8vw,13px);letter-spacing:.05em;line-height:1.2;}
+.cell .cell-foot{font-size:clamp(7px,1.4vw,11px);margin-top:2px;padding:1px 5px;border-radius:3px;background:rgba(0,0,0,.25);letter-spacing:.03em;line-height:1.3;}
 .player{background:#3b82f6;}
 .low{background:#facc15;color:#000;box-shadow:0 0 20px #facc15;}
 .medium{background:#fb923c;color:#000;box-shadow:0 0 20px #fb923c;}
@@ -51,7 +59,6 @@ button{background:#f97316;color:#fff;cursor:pointer;}
 #counter{margin-top:10px;font-size:18px;font-weight:bold;}
 @media(max-width:500px){
     #grid{max-width:90vw}
-    .cell{font-size:6vw}
 }
 </style>
 </head>
@@ -60,10 +67,10 @@ button{background:#f97316;color:#fff;cursor:pointer;}
 <div id='controls'>
 Speed:
 <select id='speed'>
-<option value='3000'>Slow</option>
-<option value='2000'>Medium</option>
-<option value='1000'>Fast</option>
-<option value='500'>Super Fast</option>
+<option value='10000'>Slow</option>
+<option value='6000'>Medium</option>
+<option value='3000'>Fast</option>
+<option value='1500'>Super Fast</option>
 <option value='random'>Random</option>
 </select>
 Balls:
@@ -87,7 +94,10 @@ rows.forEach(r=>{
         let div=document.createElement('div');
         div.className='cell';
         div.id=id;
-        div.innerText=id;
+        let idSpan=document.createElement('span');
+        idSpan.className='cell-id';
+        idSpan.textContent=id;
+        div.appendChild(idSpan);
         if(id==='B1') div.classList.add('player');
         grid.appendChild(div);
         cells[id]=div;
@@ -99,7 +109,7 @@ let interval=null;
 function getSpeed(){
     let s=document.getElementById('speed').value;
     if(s==='random'){
-        let speeds=[500,1000,2000,3000];
+        let speeds=[1500,3000,6000,10000];
         return speeds[Math.floor(Math.random()*speeds.length)];
     }
     return parseInt(s);
@@ -109,6 +119,7 @@ function startSession(){
     clearInterval(interval);
     let total=parseInt(document.getElementById('ballCount').value);
     let delivered=0;
+    let speed=getSpeed();
     document.getElementById('counter').innerText='Balls Remaining: '+total;
     interval=setInterval(()=>{
         if(delivered>=total){
@@ -117,10 +128,10 @@ function startSession(){
             document.getElementById('counter').innerText='Session Complete';
             return;
         }
-        deliverBall();
+        deliverBall(speed);
         delivered++;
         document.getElementById('counter').innerText='Balls Remaining: '+(total-delivered);
-    }, getSpeed());
+    }, speed);
 }
 
 function stopSession(){
@@ -129,20 +140,61 @@ function stopSession(){
     document.getElementById('counter').innerText='Session Stopped';
 }
 
-function deliverBall(){
+const heightConfig={
+    low:{arrow:'↓',label:'LOW'},
+    medium:{arrow:'→',label:'MED'},
+    high:{arrow:'↑',label:'HIGH'}
+};
+
+function makeCellId(text){
+    let s=document.createElement('span');
+    s.className='cell-id';
+    s.textContent=text;
+    return s;
+}
+
+const DEFAULT_SPEED_MS=10000;
+function getFootwork(row, height, speedMs){
+    if(row==='3') return 'FRONT FOOT';
+    if(row==='1') return 'BACK FOOT';
+    // good length (row 2): high → back foot; low → front foot; medium depends on speed
+    if(height==='high') return 'BACK FOOT';
+    if(height==='low') return 'FRONT FOOT';
+    return speedMs<=3000 ? 'BACK FOOT' : 'FRONT FOOT';
+}
+
+function deliverBall(speedMs){
     clearGrid();
     let options=Object.keys(cells).filter(c=>c!=='B1');
     let randomCell=options[Math.floor(Math.random()*options.length)];
     let heights=['low','medium','high'];
     let h=heights[Math.floor(Math.random()*heights.length)];
-    cells[randomCell].classList.add(h);
-    cells[randomCell].innerText=h.toUpperCase();
+    let cfg=heightConfig[h];
+    let row=randomCell.slice(1);
+    let foot=getFootwork(row,h,speedMs||DEFAULT_SPEED_MS);
+    let arrow=document.createElement('span');
+    arrow.className='cell-arrow';
+    arrow.textContent=cfg.arrow;
+    let label=document.createElement('span');
+    label.className='cell-label';
+    label.textContent=cfg.label;
+    let footSpan=document.createElement('span');
+    footSpan.className='cell-foot';
+    footSpan.textContent=foot;
+    let cell=cells[randomCell];
+    cell.classList.add(h);
+    cell.innerHTML='';
+    cell.appendChild(makeCellId(randomCell));
+    cell.appendChild(arrow);
+    cell.appendChild(label);
+    cell.appendChild(footSpan);
 }
 
 function clearGrid(){
     Object.values(cells).forEach(c=>{
         c.className='cell';
-        c.innerText=c.id;
+        c.innerHTML='';
+        c.appendChild(makeCellId(c.id));
         if(c.id==='B1') c.classList.add('player');
     });
 }
