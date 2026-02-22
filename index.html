@@ -518,6 +518,38 @@
   #complete-banner h2{font-size:1.2rem;font-weight:800;color:var(--accent);margin-bottom:4px;}
   #complete-banner p{font-size:.82rem;color:#86efac;}
 
+  /* ─── Cell shot label ─── */
+  .cell-shot{
+    font-size:clamp(.45rem,1.5vw,.62rem);
+    font-weight:800;
+    letter-spacing:.3px;
+    text-align:center;
+    color:var(--text);
+    max-width:100%;
+    line-height:1.1;
+  }
+
+  /* ─── Shot guide panel ─── */
+  .shot-guide{
+    width:100%;
+    max-width:520px;
+    margin-top:14px;
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    padding:14px 18px;
+    display:none;
+    align-items:center;
+    gap:18px;
+    animation:fadeIn .4s ease;
+  }
+  .shot-guide.active{display:flex;}
+  .shot-svg-wrap{flex-shrink:0;}
+  .shot-svg-wrap svg{display:block;width:70px;height:90px;}
+  .shot-info{display:flex;flex-direction:column;gap:4px;}
+  .shot-name{font-size:1.05rem;font-weight:800;color:var(--accent);line-height:1.2;}
+  .shot-detail{font-size:.72rem;color:var(--text-muted);letter-spacing:.3px;}
+
   /* ─── Responsive ─── */
   @media(max-width:480px){
     .controls-grid{grid-template-columns:1fr;}
@@ -608,6 +640,15 @@
   <div id="grid"></div>
 </div>
 
+<!-- Shot Guide -->
+<div class="shot-guide" id="shot-guide">
+  <div class="shot-svg-wrap" id="shot-body-svg"></div>
+  <div class="shot-info">
+    <div class="shot-name" id="shot-name"></div>
+    <div class="shot-detail" id="shot-detail"></div>
+  </div>
+</div>
+
 <!-- Stats -->
 <div class="stats-row">
   <div class="stat-card stat-low">
@@ -635,10 +676,10 @@
 </div>
 
 <script>
-/* ── Delivery zone labels (B2 = Batter, centre of grid) ── */
+/* ── Delivery zone labels (B1 = Batter position, top-centre of grid) ── */
 const ZONES={
-  A1:'Short Off',  B1:'Short Mid',  C1:'Short Leg',
-  A2:'Off Stump',  B2:'Batter',     C2:'Leg Stump',
+  A1:'Short Off',  B1:'Batter',     C1:'Short Leg',
+  A2:'Off Stump',  B2:'Mid Stump',  C2:'Leg Stump',
   A3:'Full Off',   B3:'Full Mid',   C3:'Full Leg'
 };
 
@@ -656,6 +697,117 @@ const HEIGHT_CFG={
   high:  {arrow:'↑', label:'HIGH', foot:()=>'Back Foot'}
 };
 
+/* ── Shot names: SHOT_MAP[height][row][col] ── */
+const SHOT_MAP={
+  high:{
+    '1':{A:'Upper Cut',    B:'Hook Shot',      C:'Hook Shot'},
+    '2':{A:'Upper Cut',    B:'Pull Shot',       C:'Pull Shot'},
+    '3':{A:'Slog Drive',   B:'Slog Drive',      C:'Slog Flick'}
+  },
+  medium:{
+    '1':{A:'Cut Shot',     B:'Back Foot Drive', C:'Leg Glance'},
+    '2':{A:'Cover Drive',  B:'Straight Drive',  C:'On Drive'},
+    '3':{A:'Cover Drive',  B:'Straight Drive',  C:'Flick'}
+  },
+  low:{
+    '1':{A:'Leave / Def.', B:'Back Foot Def.',  C:'Back Foot Glance'},
+    '2':{A:'Forward Def.', B:'Forward Def.',    C:'Sweep'},
+    '3':{A:'Drive',        B:'Yorker – Dig Out',C:'Sweep / Dig Out'}
+  }
+};
+
+/* ── Shot → body shape key ── */
+const SHOT_BODY={
+  'Hook Shot':'hook','Upper Cut':'hook',
+  'Pull Shot':'pull',
+  'Cut Shot':'cut','Back Foot Drive':'cut',
+  'Cover Drive':'drive','Straight Drive':'drive','On Drive':'drive',
+  'Slog Drive':'drive','Drive':'drive',
+  'Flick':'flick','Slog Flick':'flick','Leg Glance':'flick','Back Foot Glance':'flick',
+  'Sweep':'sweep','Sweep / Dig Out':'sweep',
+  'Yorker – Dig Out':'dig',
+  'Forward Def.':'defensive','Back Foot Def.':'defensive','Leave / Def.':'defensive'
+};
+
+/* ── SVG stick-figure body shapes (viewBox 0 0 70 90) ── */
+const BODY_SVG={
+  hook:`<svg viewBox="0 0 70 90" xmlns="http://www.w3.org/2000/svg" fill="none">
+    <circle cx="32" cy="11" r="8" stroke="#c7d2fe" stroke-width="2" stroke-linecap="round"/>
+    <line x1="32" y1="19" x2="36" y2="48" stroke="#c7d2fe" stroke-width="2" stroke-linecap="round"/>
+    <line x1="36" y1="48" x2="48" y2="76" stroke="#c7d2fe" stroke-width="2" stroke-linecap="round"/>
+    <line x1="36" y1="48" x2="22" y2="70" stroke="#c7d2fe" stroke-width="2" stroke-linecap="round"/>
+    <line x1="32" y1="28" x2="50" y2="24" stroke="#c7d2fe" stroke-width="2" stroke-linecap="round"/>
+    <line x1="32" y1="28" x2="14" y2="20" stroke="#c7d2fe" stroke-width="2" stroke-linecap="round"/>
+    <line x1="14" y1="20" x2="4" y2="12" stroke="#fb923c" stroke-width="3" stroke-linecap="round"/>
+  </svg>`,
+  pull:`<svg viewBox="0 0 70 90" xmlns="http://www.w3.org/2000/svg" fill="none">
+    <circle cx="30" cy="11" r="8" stroke="#c7d2fe" stroke-width="2" stroke-linecap="round"/>
+    <line x1="30" y1="19" x2="34" y2="48" stroke="#c7d2fe" stroke-width="2" stroke-linecap="round"/>
+    <line x1="34" y1="48" x2="46" y2="76" stroke="#c7d2fe" stroke-width="2" stroke-linecap="round"/>
+    <line x1="34" y1="48" x2="20" y2="72" stroke="#c7d2fe" stroke-width="2" stroke-linecap="round"/>
+    <line x1="30" y1="30" x2="52" y2="30" stroke="#c7d2fe" stroke-width="2" stroke-linecap="round"/>
+    <line x1="30" y1="30" x2="10" y2="32" stroke="#c7d2fe" stroke-width="2" stroke-linecap="round"/>
+    <line x1="10" y1="32" x2="2" y2="30" stroke="#fb923c" stroke-width="3" stroke-linecap="round"/>
+  </svg>`,
+  cut:`<svg viewBox="0 0 70 90" xmlns="http://www.w3.org/2000/svg" fill="none">
+    <circle cx="30" cy="11" r="8" stroke="#c7d2fe" stroke-width="2" stroke-linecap="round"/>
+    <line x1="30" y1="19" x2="30" y2="48" stroke="#c7d2fe" stroke-width="2" stroke-linecap="round"/>
+    <line x1="30" y1="48" x2="20" y2="76" stroke="#c7d2fe" stroke-width="2" stroke-linecap="round"/>
+    <line x1="30" y1="48" x2="44" y2="74" stroke="#c7d2fe" stroke-width="2" stroke-linecap="round"/>
+    <line x1="30" y1="30" x2="54" y2="28" stroke="#c7d2fe" stroke-width="2" stroke-linecap="round"/>
+    <line x1="54" y1="28" x2="65" y2="36" stroke="#fb923c" stroke-width="3" stroke-linecap="round"/>
+    <line x1="30" y1="30" x2="12" y2="34" stroke="#c7d2fe" stroke-width="2" stroke-linecap="round"/>
+  </svg>`,
+  drive:`<svg viewBox="0 0 70 90" xmlns="http://www.w3.org/2000/svg" fill="none">
+    <circle cx="30" cy="10" r="8" stroke="#c7d2fe" stroke-width="2" stroke-linecap="round"/>
+    <line x1="30" y1="18" x2="24" y2="46" stroke="#c7d2fe" stroke-width="2" stroke-linecap="round"/>
+    <line x1="24" y1="46" x2="12" y2="76" stroke="#c7d2fe" stroke-width="2" stroke-linecap="round"/>
+    <line x1="24" y1="46" x2="40" y2="72" stroke="#c7d2fe" stroke-width="2" stroke-linecap="round"/>
+    <line x1="30" y1="26" x2="46" y2="20" stroke="#c7d2fe" stroke-width="2" stroke-linecap="round"/>
+    <line x1="30" y1="26" x2="14" y2="36" stroke="#c7d2fe" stroke-width="2" stroke-linecap="round"/>
+    <line x1="14" y1="36" x2="8" y2="60" stroke="#fb923c" stroke-width="3" stroke-linecap="round"/>
+  </svg>`,
+  flick:`<svg viewBox="0 0 70 90" xmlns="http://www.w3.org/2000/svg" fill="none">
+    <circle cx="30" cy="10" r="8" stroke="#c7d2fe" stroke-width="2" stroke-linecap="round"/>
+    <line x1="30" y1="18" x2="26" y2="46" stroke="#c7d2fe" stroke-width="2" stroke-linecap="round"/>
+    <line x1="26" y1="46" x2="14" y2="74" stroke="#c7d2fe" stroke-width="2" stroke-linecap="round"/>
+    <line x1="26" y1="46" x2="40" y2="72" stroke="#c7d2fe" stroke-width="2" stroke-linecap="round"/>
+    <line x1="30" y1="28" x2="46" y2="24" stroke="#c7d2fe" stroke-width="2" stroke-linecap="round"/>
+    <line x1="30" y1="28" x2="14" y2="36" stroke="#c7d2fe" stroke-width="2" stroke-linecap="round"/>
+    <line x1="14" y1="36" x2="6" y2="52" stroke="#fb923c" stroke-width="3" stroke-linecap="round"/>
+  </svg>`,
+  sweep:`<svg viewBox="0 0 70 90" xmlns="http://www.w3.org/2000/svg" fill="none">
+    <circle cx="38" cy="17" r="8" stroke="#c7d2fe" stroke-width="2" stroke-linecap="round"/>
+    <line x1="38" y1="25" x2="34" y2="50" stroke="#c7d2fe" stroke-width="2" stroke-linecap="round"/>
+    <line x1="34" y1="50" x2="18" y2="62" stroke="#c7d2fe" stroke-width="2" stroke-linecap="round"/>
+    <line x1="18" y1="62" x2="14" y2="80" stroke="#c7d2fe" stroke-width="2" stroke-linecap="round"/>
+    <line x1="34" y1="50" x2="50" y2="68" stroke="#c7d2fe" stroke-width="2" stroke-linecap="round"/>
+    <line x1="38" y1="34" x2="20" y2="44" stroke="#c7d2fe" stroke-width="2" stroke-linecap="round"/>
+    <line x1="38" y1="34" x2="56" y2="38" stroke="#c7d2fe" stroke-width="2" stroke-linecap="round"/>
+    <line x1="20" y1="44" x2="2" y2="52" stroke="#fb923c" stroke-width="3" stroke-linecap="round"/>
+  </svg>`,
+  defensive:`<svg viewBox="0 0 70 90" xmlns="http://www.w3.org/2000/svg" fill="none">
+    <circle cx="35" cy="10" r="8" stroke="#c7d2fe" stroke-width="2" stroke-linecap="round"/>
+    <line x1="35" y1="18" x2="35" y2="50" stroke="#c7d2fe" stroke-width="2" stroke-linecap="round"/>
+    <line x1="35" y1="50" x2="24" y2="78" stroke="#c7d2fe" stroke-width="2" stroke-linecap="round"/>
+    <line x1="35" y1="50" x2="46" y2="76" stroke="#c7d2fe" stroke-width="2" stroke-linecap="round"/>
+    <line x1="35" y1="28" x2="24" y2="36" stroke="#c7d2fe" stroke-width="2" stroke-linecap="round"/>
+    <line x1="35" y1="28" x2="46" y2="24" stroke="#c7d2fe" stroke-width="2" stroke-linecap="round"/>
+    <line x1="24" y1="36" x2="22" y2="62" stroke="#fb923c" stroke-width="3" stroke-linecap="round"/>
+  </svg>`,
+  dig:`<svg viewBox="0 0 70 90" xmlns="http://www.w3.org/2000/svg" fill="none">
+    <circle cx="30" cy="20" r="8" stroke="#c7d2fe" stroke-width="2" stroke-linecap="round"/>
+    <line x1="30" y1="28" x2="28" y2="52" stroke="#c7d2fe" stroke-width="2" stroke-linecap="round"/>
+    <line x1="28" y1="52" x2="16" y2="70" stroke="#c7d2fe" stroke-width="2" stroke-linecap="round"/>
+    <line x1="16" y1="70" x2="18" y2="84" stroke="#c7d2fe" stroke-width="2" stroke-linecap="round"/>
+    <line x1="28" y1="52" x2="44" y2="68" stroke="#c7d2fe" stroke-width="2" stroke-linecap="round"/>
+    <line x1="44" y1="68" x2="44" y2="82" stroke="#c7d2fe" stroke-width="2" stroke-linecap="round"/>
+    <line x1="30" y1="36" x2="20" y2="44" stroke="#c7d2fe" stroke-width="2" stroke-linecap="round"/>
+    <line x1="30" y1="36" x2="44" y2="34" stroke="#c7d2fe" stroke-width="2" stroke-linecap="round"/>
+    <line x1="20" y1="44" x2="14" y2="62" stroke="#fb923c" stroke-width="3" stroke-linecap="round"/>
+  </svg>`
+};
+
 const cols=['A','B','C'];
 const rows=['1','2','3'];
 const gridEl=document.getElementById('grid');
@@ -671,8 +823,9 @@ rows.forEach(r=>{
       '<span class="cell-id">'+id+'</span>'+
       '<span class="cell-arrow"></span>'+
       '<span class="cell-height"></span>'+
+      '<span class="cell-shot"></span>'+
       '<span class="cell-foot">'+ZONES[id]+'</span>';
-    if(id==='B2') div.classList.add('player');
+    if(id==='B1') div.classList.add('player');
     gridEl.appendChild(div);
     cells[id]=div;
   });
@@ -865,23 +1018,34 @@ function endSession(complete){
 /* ── Deliver a ball ── */
 function deliverBall(){
   clearGrid();
-  const options=Object.keys(cells).filter(c=>c!=='B2');
+  const options=Object.keys(cells).filter(c=>c!=='B1');
   const cellId=options[Math.floor(Math.random()*options.length)];
   const heights=['low','medium','high'];
   const h=heights[Math.floor(Math.random()*heights.length)];
   const cfg=HEIGHT_CFG[h];
   const row=cellId.slice(1);
+  const col=cellId[0];
   const speedMs=getSpeed();
   const foot=cfg.foot(row,speedMs);
+  const shot=SHOT_MAP[h]?.[row]?.[col]||'';
   const el=cells[cellId];
   el.className='cell '+h;
   el.querySelector('.cell-id').textContent=cellId;
   el.querySelector('.cell-arrow').textContent=cfg.arrow;
   el.querySelector('.cell-height').textContent=cfg.label;
+  el.querySelector('.cell-shot').textContent=shot;
   el.querySelector('.cell-foot').textContent=foot;
   stats[h]++;
   addToHistory(h,cellId);
   playTick(h);
+  /* ── Shot guide ── */
+  const bodyKey=shot?(SHOT_BODY[shot]||'defensive'):null;
+  if(bodyKey){
+    document.getElementById('shot-body-svg').innerHTML=BODY_SVG[bodyKey]||'';
+    document.getElementById('shot-name').textContent=shot;
+    document.getElementById('shot-detail').textContent=foot+' · '+cfg.label+' · '+ZONES[cellId];
+    document.getElementById('shot-guide').classList.add('active');
+  }
 }
 
 /* ── Reset grid to idle state ── */
@@ -892,9 +1056,11 @@ function clearGrid(){
     c.querySelector('.cell-id').textContent=id;
     c.querySelector('.cell-arrow').textContent='';
     c.querySelector('.cell-height').textContent='';
+    c.querySelector('.cell-shot').textContent='';
     c.querySelector('.cell-foot').textContent=ZONES[id]||'';
-    if(id==='B2') c.classList.add('player');
+    if(id==='B1') c.classList.add('player');
   });
+  document.getElementById('shot-guide').classList.remove('active');
 }
 
 /* ── Keyboard shortcut: Space to start/stop ── */
