@@ -26,6 +26,7 @@ h1{margin-bottom:10px}
 }
 .cell{
     display:flex;
+    flex-direction:column;
     align-items:center;
     justify-content:center;
     border:2px solid #334155;
@@ -40,6 +41,8 @@ h1{margin-bottom:10px}
 .low{background:#facc15;color:#000;box-shadow:0 0 20px #facc15;}
 .medium{background:#fb923c;color:#000;box-shadow:0 0 20px #fb923c;}
 .high{background:#ef4444;color:#fff;box-shadow:0 0 20px #ef4444;}
+.cell-label{display:block;font-size:4vw;}
+.height-label{display:block;font-size:1.8vw;}
 select,button,input{
     padding:8px 12px;
     margin:5px;
@@ -52,6 +55,8 @@ button{background:#f97316;color:#fff;cursor:pointer;}
 @media(max-width:500px){
     #grid{max-width:90vw}
     .cell{font-size:6vw}
+    .cell-label{font-size:6vw}
+    .height-label{font-size:2.8vw}
 }
 </style>
 </head>
@@ -87,7 +92,7 @@ rows.forEach(r=>{
         let div=document.createElement('div');
         div.className='cell';
         div.id=id;
-        div.innerText=id;
+        div.innerHTML='<span class="cell-label">'+id+'</span>';
         if(id==='B1') div.classList.add('player');
         grid.appendChild(div);
         cells[id]=div;
@@ -136,13 +141,13 @@ function deliverBall(){
     let heights=['low','medium','high'];
     let h=heights[Math.floor(Math.random()*heights.length)];
     cells[randomCell].classList.add(h);
-    cells[randomCell].innerText=h.toUpperCase();
+    cells[randomCell].innerHTML='<span class="cell-label">'+randomCell+'</span><span class="height-label">'+h.toUpperCase()+'</span>';
 }
 
 function clearGrid(){
     Object.values(cells).forEach(c=>{
         c.className='cell';
-        c.innerText=c.id;
+        c.innerHTML='<span class="cell-label">'+c.id+'</span>';
         if(c.id==='B1') c.classList.add('player');
     });
 }
