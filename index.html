@@ -26,16 +26,23 @@ h1{margin-bottom:10px}
 }
 .cell{
     display:flex;
+    flex-direction:column;
     align-items:center;
     justify-content:center;
     border:2px solid #334155;
     border-radius:8px;
-    font-size:4vw;
+    font-size:14px;
     background:#1e293b;
     transition:.2s;
     font-weight:bold;
     aspect-ratio:1/1;
+    overflow:hidden;
+    min-width:0;
+    min-height:0;
 }
+.cell .cell-id{font-size:clamp(10px,2.5vw,16px);opacity:.7;line-height:1.2;}
+.cell .cell-arrow{font-size:clamp(20px,6vw,48px);line-height:1;margin:2px 0;}
+.cell .cell-label{font-size:clamp(8px,1.8vw,13px);letter-spacing:.05em;line-height:1.2;}
 .player{background:#3b82f6;}
 .low{background:#facc15;color:#000;box-shadow:0 0 20px #facc15;}
 .medium{background:#fb923c;color:#000;box-shadow:0 0 20px #fb923c;}
@@ -51,7 +58,6 @@ button{background:#f97316;color:#fff;cursor:pointer;}
 #counter{margin-top:10px;font-size:18px;font-weight:bold;}
 @media(max-width:500px){
     #grid{max-width:90vw}
-    .cell{font-size:6vw}
 }
 </style>
 </head>
@@ -87,7 +93,10 @@ rows.forEach(r=>{
         let div=document.createElement('div');
         div.className='cell';
         div.id=id;
-        div.innerText=id;
+        let idSpan=document.createElement('span');
+        idSpan.className='cell-id';
+        idSpan.textContent=id;
+        div.appendChild(idSpan);
         if(id==='B1') div.classList.add('player');
         grid.appendChild(div);
         cells[id]=div;
@@ -129,20 +138,45 @@ function stopSession(){
     document.getElementById('counter').innerText='Session Stopped';
 }
 
+const heightConfig={
+    low:{arrow:'↓',label:'LOW'},
+    medium:{arrow:'→',label:'MED'},
+    high:{arrow:'↑',label:'HIGH'}
+};
+
+function makeCellId(text){
+    let s=document.createElement('span');
+    s.className='cell-id';
+    s.textContent=text;
+    return s;
+}
+
 function deliverBall(){
     clearGrid();
     let options=Object.keys(cells).filter(c=>c!=='B1');
     let randomCell=options[Math.floor(Math.random()*options.length)];
     let heights=['low','medium','high'];
     let h=heights[Math.floor(Math.random()*heights.length)];
-    cells[randomCell].classList.add(h);
-    cells[randomCell].innerText=h.toUpperCase();
+    let cfg=heightConfig[h];
+    let arrow=document.createElement('span');
+    arrow.className='cell-arrow';
+    arrow.textContent=cfg.arrow;
+    let label=document.createElement('span');
+    label.className='cell-label';
+    label.textContent=cfg.label;
+    let cell=cells[randomCell];
+    cell.classList.add(h);
+    cell.innerHTML='';
+    cell.appendChild(makeCellId(randomCell));
+    cell.appendChild(arrow);
+    cell.appendChild(label);
 }
 
 function clearGrid(){
     Object.values(cells).forEach(c=>{
         c.className='cell';
-        c.innerText=c.id;
+        c.innerHTML='';
+        c.appendChild(makeCellId(c.id));
         if(c.id==='B1') c.classList.add('player');
     });
 }
