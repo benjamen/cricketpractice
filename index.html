@@ -5,145 +5,361 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Cricket Reaction Grid Pro</title>
 <style>
-body{
-    font-family:Arial,Helvetica,sans-serif;
-    text-align:center;
-    background:#0f172a;
-    color:#fff;
-    margin:0;
-    padding:20px;
+body {
+    font-family: Arial, Helvetica, sans-serif;
+    text-align: center;
+    background: #0f172a;
+    color: #fff;
+    margin: 0;
+    padding: 20px;
 }
-h1{margin-bottom:10px}
-#controls{margin-bottom:10px}
-#grid{
-    display:grid;
-    grid-template-columns:repeat(3,1fr);
-    grid-template-rows:repeat(3,1fr);
-    gap:8px;
-    justify-content:center;
-    margin:20px auto;
-    max-width:500px;
+h1 { margin-bottom: 4px; font-size: clamp(18px, 4vw, 28px); }
+.subtitle { color: #94a3b8; font-size: 14px; margin-bottom: 16px; }
+#controls {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    background: #1e293b;
+    border-radius: 10px;
+    padding: 12px;
+    max-width: 480px;
+    margin: 0 auto 14px;
 }
-.cell{
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    border:2px solid #334155;
-    border-radius:8px;
-    font-size:4vw;
-    background:#1e293b;
-    transition:.2s;
-    font-weight:bold;
-    aspect-ratio:1/1;
+.control-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
 }
-.player{background:#3b82f6;}
-.low{background:#facc15;color:#000;box-shadow:0 0 20px #facc15;}
-.medium{background:#fb923c;color:#000;box-shadow:0 0 20px #fb923c;}
-.high{background:#ef4444;color:#fff;box-shadow:0 0 20px #ef4444;}
-select,button,input{
-    padding:8px 12px;
-    margin:5px;
-    border-radius:6px;
-    border:none;
-    font-size:14px;
+label { font-size: 13px; color: #94a3b8; }
+#grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(3, 1fr);
+    gap: 8px;
+    margin: 16px auto;
+    max-width: 480px;
 }
-button{background:#f97316;color:#fff;cursor:pointer;}
-#counter{margin-top:10px;font-size:18px;font-weight:bold;}
-@media(max-width:500px){
-    #grid{max-width:90vw}
-    .cell{font-size:6vw}
+.cell {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid #334155;
+    border-radius: 10px;
+    font-size: clamp(10px, 2.8vw, 20px);
+    background: #1e293b;
+    transition: background .2s, box-shadow .2s;
+    font-weight: bold;
+    aspect-ratio: 1/1;
+    overflow: hidden;
+    gap: 2px;
+}
+.cell-id    { font-size: 0.75em; color: #64748b; font-weight: normal; line-height: 1; }
+.cell-icon  { font-size: 1.5em; line-height: 1; }
+.cell-label { font-size: 1em; line-height: 1; }
+.player { background: #3b82f6; border-color: #60a5fa; }
+.player .cell-id { color: #bfdbfe; }
+.low    { background: #facc15; color: #000; box-shadow: 0 0 20px #facc15; border-color: #fde68a; }
+.low    .cell-id { color: #78350f; }
+.medium { background: #fb923c; color: #000; box-shadow: 0 0 20px #fb923c; border-color: #fed7aa; }
+.medium .cell-id { color: #7c2d12; }
+.high   { background: #ef4444; color: #fff; box-shadow: 0 0 20px #ef4444; border-color: #fca5a5; }
+.high   .cell-id { color: #fee2e2; }
+@keyframes readyPulse {
+    0%,100% { transform: scale(1);    box-shadow: 0 0 8px  #22c55e; background: #166534; }
+    50%      { transform: scale(1.1); box-shadow: 0 0 30px #22c55e; background: #22c55e; }
+}
+@keyframes cellWait {
+    0%,100% { opacity: 0.4; border-color: #1e3a5f; }
+    50%      { opacity: 0.85; border-color: #334155; }
+}
+@keyframes ballArrive {
+    0%   { transform: scale(0.4); opacity: 0; }
+    70%  { transform: scale(1.13); }
+    100% { transform: scale(1);   opacity: 1; }
+}
+.player-ready {
+    background: #22c55e !important;
+    color: #000 !important;
+    border-color: #16a34a !important;
+    transition: none;
+    animation: readyPulse .65s ease-in-out infinite;
+}
+.cell-waiting { animation: cellWait .65s ease-in-out infinite; }
+.ball-arrive  { animation: ballArrive .35s ease-out forwards; }
+select, input {
+    padding: 7px 10px;
+    border-radius: 6px;
+    border: 1px solid #334155;
+    font-size: 13px;
+    background: #0f172a;
+    color: #fff;
+}
+.btn {
+    padding: 8px 16px;
+    border-radius: 6px;
+    border: none;
+    font-size: 13px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background .15s;
+}
+.btn-start { background: #22c55e; color: #fff; }
+.btn-start:hover { background: #16a34a; }
+.btn-stop  { background: #ef4444; color: #fff; }
+.btn-stop:hover  { background: #dc2626; }
+#status-bar { max-width: 480px; margin: 0 auto 8px; }
+#counter { font-size: 15px; font-weight: bold; margin-bottom: 6px; min-height: 20px; }
+#progress-bar-wrap {
+    background: #1e293b;
+    border-radius: 8px;
+    height: 8px;
+    overflow: hidden;
+    display: none;
+}
+#progress-bar {
+    height: 100%;
+    background: #f97316;
+    border-radius: 8px;
+    width: 0%;
+    transition: width .3s;
+}
+#shotInfo {
+    margin-top: 10px;
+    font-size: 15px;
+    min-height: 28px;
+}
+#shotInfo span {
+    background: #1e3a5f;
+    border: 1px solid #2563eb;
+    padding: 4px 14px;
+    border-radius: 8px;
+    color: #fbbf24;
+}
+.legend {
+    display: flex;
+    justify-content: center;
+    gap: 14px;
+    margin-top: 10px;
+    font-size: 12px;
+    color: #94a3b8;
+}
+.legend-item { display: flex; align-items: center; gap: 4px; }
+.legend-dot  { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+@media (max-width: 500px) {
+    #grid { max-width: 90vw; }
+    .cell { font-size: clamp(9px, 4vw, 16px); }
 }
 </style>
 </head>
 <body>
-<h1>Cricket Practice Reaction Grid</h1>
+<h1><span aria-hidden="true">🏏 </span>Cricket Reaction Grid</h1>
+<p class="subtitle">React to the ball — move your feet!</p>
 <div id='controls'>
-Speed:
-<select id='speed'>
-<option value='3000'>Slow</option>
-<option value='2000'>Medium</option>
-<option value='1000'>Fast</option>
-<option value='500'>Super Fast</option>
-<option value='random'>Random</option>
-</select>
-Balls:
-<input type='number' id='ballCount' value='50' min='1' style='width:70px'>
-<button onclick='startSession()'>Start Session</button>
-<button onclick='stopSession()'>Stop Session</button>
+    <div class="control-group">
+        <label for="speed">Speed:</label>
+        <select id='speed'>
+            <option value='6000'>Slow</option>
+            <option value='4000'>Medium</option>
+            <option value='2000'>Fast</option>
+            <option value='1000'>Super Fast</option>
+            <option value='random'>Random</option>
+        </select>
+    </div>
+    <div class="control-group">
+        <label for="ballCount">Balls:</label>
+        <input type='number' id='ballCount' value='50' min='1' style='width:60px'>
+    </div>
+    <button class="btn btn-start" onclick='startSession()'><span aria-hidden="true">▶ </span>Start</button>
+    <button class="btn btn-stop"  onclick='stopSession()' ><span aria-hidden="true">■ </span>Stop</button>
 </div>
-<div id='counter'></div>
+<div id='status-bar'>
+    <div id='counter' aria-live="polite"></div>
+    <div id='progress-bar-wrap'><div id='progress-bar'></div></div>
+</div>
+<div id='shotInfo'></div>
 <div id='grid'></div>
+<div class="legend">
+    <div class="legend-item"><div class="legend-dot" style="background:#facc15"></div> Low</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#fb923c"></div> Med</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#ef4444"></div> High</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#3b82f6"></div> You</div>
+</div>
 
 <script>
-const cols=['A','B','C'];
-const rows=['1','2','3'];
-const grid=document.getElementById('grid');
-let cells={};
+const cols = ['A', 'B', 'C'];
+const rows = ['1', '2', '3'];
+const grid = document.getElementById('grid');
+let cells = {};
 
-// Create grid cells
-rows.forEach(r=>{
-    cols.forEach(c=>{
-        let id=c+r;
-        let div=document.createElement('div');
-        div.className='cell';
-        div.id=id;
-        div.innerText=id;
-        if(id==='B1') div.classList.add('player');
+const heightMeta = {
+    low:    { icon: '↓', label: 'L' },
+    medium: { icon: '→', label: 'M' },
+    high:   { icon: '↑', label: 'H' },
+};
+
+rows.forEach(r => {
+    cols.forEach(c => {
+        let id = c + r;
+        let div = document.createElement('div');
+        div.className = 'cell';
+        div.id = id;
+        div.innerHTML = cellIdHTML(id);
+        if (id === 'B1') {
+            div.classList.add('player');
+            div.innerHTML = `<span class="cell-icon" role="img" aria-label="cricket bat">🏏</span><span class="cell-id">${id}</span>`;
+        }
         grid.appendChild(div);
-        cells[id]=div;
+        cells[id] = div;
     });
 });
 
-let interval=null;
+let sessionActive = false;
+let sessionTimeout = null;
+let totalBalls = 0;
+let delivered = 0;
 
-function getSpeed(){
-    let s=document.getElementById('speed').value;
-    if(s==='random'){
-        let speeds=[500,1000,2000,3000];
-        return speeds[Math.floor(Math.random()*speeds.length)];
+function cellIdHTML(id) {
+    return `<span class="cell-id">${id}</span>`;
+}
+
+function getSpeed() {
+    let s = document.getElementById('speed').value;
+    if (s === 'random') {
+        let speeds = [1000, 2000, 4000, 6000];
+        return speeds[Math.floor(Math.random() * speeds.length)];
     }
     return parseInt(s);
 }
 
-function startSession(){
-    clearInterval(interval);
-    let total=parseInt(document.getElementById('ballCount').value);
-    let delivered=0;
-    document.getElementById('counter').innerText='Balls Remaining: '+total;
-    interval=setInterval(()=>{
-        if(delivered>=total){
-            clearInterval(interval);
-            clearGrid();
-            document.getElementById('counter').innerText='Session Complete';
-            return;
-        }
-        deliverBall();
+function startSession() {
+    stopSession();
+    sessionActive = true;
+    totalBalls = parseInt(document.getElementById('ballCount').value);
+    delivered = 0;
+    document.getElementById('progress-bar-wrap').style.display = 'block';
+    document.getElementById('progress-bar').style.width = '0%';
+    document.getElementById('shotInfo').innerHTML = '';
+    updateCounter();
+    runBall();
+}
+
+function stopSession() {
+    sessionActive = false;
+    clearTimeout(sessionTimeout);
+    clearGrid();
+    document.getElementById('counter').innerText = '⏹ Session Stopped';
+    document.getElementById('progress-bar-wrap').style.display = 'none';
+    document.getElementById('shotInfo').innerHTML = '';
+}
+
+function updateCounter() {
+    let remaining = totalBalls - delivered;
+    document.getElementById('counter').innerText =
+        `Ball ${delivered} / ${totalBalls}  •  ${remaining} remaining`;
+    let pct = totalBalls > 0 ? (delivered / totalBalls * 100) : 0;
+    document.getElementById('progress-bar').style.width = pct + '%';
+}
+
+function runBall() {
+    if (!sessionActive) return;
+    if (delivered >= totalBalls) {
+        clearGrid();
+        document.getElementById('counter').innerText = '✅ Session Complete!';
+        document.getElementById('progress-bar').style.width = '100%';
+        document.getElementById('shotInfo').innerHTML = '';
+        sessionActive = false;
+        return;
+    }
+    let speed = getSpeed();
+    // Ready window: at least 700ms or 38% of speed interval, max 1400ms
+    let readyTime = Math.max(700, Math.min(1400, Math.round(speed * 0.38)));
+    let displayTime = speed - readyTime;
+
+    document.getElementById('shotInfo').innerHTML = '';
+    showReadyState();
+
+    sessionTimeout = setTimeout(() => {
+        if (!sessionActive) return;
+        let shot = deliverBall(speed);
         delivered++;
-        document.getElementById('counter').innerText='Balls Remaining: '+(total-delivered);
-    }, getSpeed());
+        updateCounter();
+        if (shot) {
+            document.getElementById('shotInfo').innerHTML = '🏏 Try: <span>' + shot + '</span>';
+        }
+        sessionTimeout = setTimeout(() => { runBall(); }, displayTime);
+    }, readyTime);
 }
 
-function stopSession(){
-    clearInterval(interval);
+function showReadyState() {
     clearGrid();
-    document.getElementById('counter').innerText='Session Stopped';
+    Object.values(cells).forEach(c => {
+        if (c.id !== 'B1') c.classList.add('cell-waiting');
+    });
+    cells['B1'].classList.remove('player');
+    cells['B1'].classList.add('player-ready');
+    cells['B1'].innerHTML = `<span class="cell-label">READY</span>`;
 }
 
-function deliverBall(){
+function deliverBall(speed) {
     clearGrid();
-    let options=Object.keys(cells).filter(c=>c!=='B1');
-    let randomCell=options[Math.floor(Math.random()*options.length)];
-    let heights=['low','medium','high'];
-    let h=heights[Math.floor(Math.random()*heights.length)];
-    cells[randomCell].classList.add(h);
-    cells[randomCell].innerText=h.toUpperCase();
+    let options = Object.keys(cells).filter(c => c !== 'B1');
+    let randomCell = options[Math.floor(Math.random() * options.length)];
+    let heights = ['low', 'medium', 'high'];
+    let h = heights[Math.floor(Math.random() * heights.length)];
+    let meta = heightMeta[h];
+    cells[randomCell].classList.add(h, 'ball-arrive');
+    cells[randomCell].innerHTML =
+        `<span class="cell-icon">${meta.icon}</span>` +
+        `<span class="cell-label">${meta.label}</span>` +
+        `<span class="cell-id">${randomCell}</span>`;
+    setTimeout(() => cells[randomCell].classList.remove('ball-arrive'), 350);
+    return recommendShot(randomCell, h, speed);
 }
 
-function clearGrid(){
-    Object.values(cells).forEach(c=>{
-        c.className='cell';
-        c.innerText=c.id;
-        if(c.id==='B1') c.classList.add('player');
+// Recommend the correct cricket shot based on line (column), ball height, and pace
+function recommendShot(cellId, height, speed) {
+    const col = cellId[0]; // A=off side, B=middle stump, C=leg side
+    const row = parseInt(cellId[1]); // 1=short pitched, 2=good length, 3=full
+    const isSlow = speed >= 4000;
+    const isFast = speed <= 1000;
+    const isShort = (row === 1 || height === 'high');
+    const isFull  = (row === 3 && height !== 'high');
+
+    if (col === 'A') { // Off side / outside off stump
+        if (isShort) return isFast ? 'Duck or Leave' : 'Cut Shot';
+        if (isFull)  return isSlow ? 'Off Drive or Sweep' : 'Cover Drive or Off Drive';
+        if (height === 'low') return isSlow ? 'Sweep or Forward Defensive' : 'Cover Drive';
+        return 'Cover Drive';
+    }
+    if (col === 'B') { // Middle stump
+        if (isShort) return isFast ? 'Duck / Sway' : 'Pull Shot';
+        if (isFull)  return isSlow ? 'Straight Drive or Sweep' : 'Straight Drive';
+        if (height === 'low') return isSlow ? 'Sweep' : 'Forward Defensive';
+        if (height === 'medium') return 'Straight Drive or Flick';
+        return 'Pull Shot';
+    }
+    if (col === 'C') { // Leg side / outside leg stump
+        if (isShort) return isFast ? 'Leg Side Sway' : 'Hook Shot';
+        if (isFull)  return isSlow ? 'Sweep or On Drive' : 'On Drive or Flick';
+        if (height === 'low') return isSlow ? 'Sweep' : 'Leg Glance';
+        if (height === 'medium') return 'Flick off Hips';
+        return 'Hook Shot';
+    }
+    return 'Forward Defensive';
+}
+
+function clearGrid() {
+    Object.values(cells).forEach(c => {
+        c.className = 'cell';
+        if (c.id === 'B1') {
+            c.classList.add('player');
+            c.innerHTML = `<span class="cell-icon" role="img" aria-label="cricket bat">🏏</span><span class="cell-id">${c.id}</span>`;
+        } else {
+            c.innerHTML = cellIdHTML(c.id);
+        }
     });
 }
 </script>
