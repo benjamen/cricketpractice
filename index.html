@@ -32,7 +32,7 @@ h1{margin-bottom:10px}
     border-radius:8px;
     font-size:4vw;
     background:#1e293b;
-    transition:.2s;
+    transition:.25s;
     font-weight:bold;
     aspect-ratio:1/1;
 }
@@ -40,6 +40,32 @@ h1{margin-bottom:10px}
 .low{background:#facc15;color:#000;box-shadow:0 0 20px #facc15;}
 .medium{background:#fb923c;color:#000;box-shadow:0 0 20px #fb923c;}
 .high{background:#ef4444;color:#fff;box-shadow:0 0 20px #ef4444;}
+@keyframes readyPulse{
+    0%,100%{transform:scale(1);box-shadow:0 0 8px #22c55e;background:#166534;}
+    50%{transform:scale(1.1);box-shadow:0 0 30px #22c55e;background:#22c55e;}
+}
+@keyframes cellWait{
+    0%,100%{opacity:0.4;border-color:#1e3a5f;}
+    50%{opacity:0.85;border-color:#334155;}
+}
+@keyframes ballArrive{
+    0%{transform:scale(0.4);opacity:0;}
+    70%{transform:scale(1.13);}
+    100%{transform:scale(1);opacity:1;}
+}
+.player-ready{
+    background:#22c55e!important;
+    color:#000!important;
+    border-color:#16a34a!important;
+    transition:none;
+    animation:readyPulse .65s ease-in-out infinite;
+}
+.cell-waiting{
+    animation:cellWait .65s ease-in-out infinite;
+}
+.ball-arrive{
+    animation:ballArrive .35s ease-out forwards;
+}
 select,button,input{
     padding:8px 12px;
     margin:5px;
@@ -49,6 +75,18 @@ select,button,input{
 }
 button{background:#f97316;color:#fff;cursor:pointer;}
 #counter{margin-top:10px;font-size:18px;font-weight:bold;}
+#shotInfo{
+    margin-top:10px;
+    font-size:15px;
+    min-height:28px;
+}
+#shotInfo span{
+    background:#1e3a5f;
+    border:1px solid #2563eb;
+    padding:4px 14px;
+    border-radius:8px;
+    color:#fbbf24;
+}
 @media(max-width:500px){
     #grid{max-width:90vw}
     .cell{font-size:6vw}
@@ -60,10 +98,10 @@ button{background:#f97316;color:#fff;cursor:pointer;}
 <div id='controls'>
 Speed:
 <select id='speed'>
-<option value='3000'>Slow</option>
-<option value='2000'>Medium</option>
-<option value='1000'>Fast</option>
-<option value='500'>Super Fast</option>
+<option value='6000'>Slow</option>
+<option value='4000'>Medium</option>
+<option value='2000'>Fast</option>
+<option value='1000'>Super Fast</option>
 <option value='random'>Random</option>
 </select>
 Balls:
@@ -72,6 +110,7 @@ Balls:
 <button onclick='stopSession()'>Stop Session</button>
 </div>
 <div id='counter'></div>
+<div id='shotInfo'></div>
 <div id='grid'></div>
 
 <script>
@@ -94,49 +133,121 @@ rows.forEach(r=>{
     });
 });
 
-let interval=null;
+let sessionActive=false;
+let sessionTimeout=null;
 
 function getSpeed(){
     let s=document.getElementById('speed').value;
     if(s==='random'){
-        let speeds=[500,1000,2000,3000];
+        let speeds=[1000,2000,4000,6000];
         return speeds[Math.floor(Math.random()*speeds.length)];
     }
     return parseInt(s);
 }
 
 function startSession(){
-    clearInterval(interval);
+    stopSession();
+    sessionActive=true;
     let total=parseInt(document.getElementById('ballCount').value);
-    let delivered=0;
     document.getElementById('counter').innerText='Balls Remaining: '+total;
-    interval=setInterval(()=>{
-        if(delivered>=total){
-            clearInterval(interval);
-            clearGrid();
-            document.getElementById('counter').innerText='Session Complete';
-            return;
-        }
-        deliverBall();
-        delivered++;
-        document.getElementById('counter').innerText='Balls Remaining: '+(total-delivered);
-    }, getSpeed());
+    document.getElementById('shotInfo').innerHTML='';
+    runBall(total,0);
 }
 
 function stopSession(){
-    clearInterval(interval);
+    sessionActive=false;
+    clearTimeout(sessionTimeout);
     clearGrid();
     document.getElementById('counter').innerText='Session Stopped';
+    document.getElementById('shotInfo').innerHTML='';
 }
 
-function deliverBall(){
+function runBall(total,delivered){
+    if(!sessionActive) return;
+    if(delivered>=total){
+        clearGrid();
+        document.getElementById('counter').innerText='Session Complete';
+        document.getElementById('shotInfo').innerHTML='';
+        sessionActive=false;
+        return;
+    }
+    let speed=getSpeed();
+    // Ready window: at least 700ms or 38% of speed interval, max 1400ms
+    let readyTime=Math.max(700,Math.min(1400,Math.round(speed*0.38)));
+    let displayTime=speed-readyTime;
+
+    // Clear shot info and show the "READY" transition
+    document.getElementById('shotInfo').innerHTML='';
+    showReadyState();
+
+    sessionTimeout=setTimeout(()=>{
+        if(!sessionActive) return;
+        let shot=deliverBall(speed);
+        delivered++;
+        document.getElementById('counter').innerText='Balls Remaining: '+(total-delivered);
+        if(shot){
+            document.getElementById('shotInfo').innerHTML='🏏 Try: <span>'+shot+'</span>';
+        }
+        sessionTimeout=setTimeout(()=>{
+            runBall(total,delivered);
+        },displayTime);
+    },readyTime);
+}
+
+function showReadyState(){
+    clearGrid();
+    // All non-player cells get a subtle waiting animation
+    Object.values(cells).forEach(c=>{
+        if(c.id!=='B1') c.classList.add('cell-waiting');
+    });
+    // Player cell pulses bright green with READY text
+    cells['B1'].classList.remove('player');
+    cells['B1'].classList.add('player-ready');
+    cells['B1'].innerText='READY';
+}
+
+function deliverBall(speed){
     clearGrid();
     let options=Object.keys(cells).filter(c=>c!=='B1');
     let randomCell=options[Math.floor(Math.random()*options.length)];
     let heights=['low','medium','high'];
     let h=heights[Math.floor(Math.random()*heights.length)];
-    cells[randomCell].classList.add(h);
+    cells[randomCell].classList.add(h,'ball-arrive');
     cells[randomCell].innerText=h.toUpperCase();
+    setTimeout(()=>cells[randomCell].classList.remove('ball-arrive'),350);
+    return recommendShot(randomCell,h,speed);
+}
+
+// Recommend the correct cricket shot based on line (column), ball height, and pace
+function recommendShot(cellId,height,speed){
+    const col=cellId[0]; // A=off side, B=middle stump, C=leg side
+    const row=parseInt(cellId[1]); // 1=short pitched, 2=good length, 3=full
+    const isSlow=speed>=4000;
+    const isFast=speed<=1000;
+    const isShort=(row===1||height==='high');
+    const isFull=(row===3&&height!=='high');
+
+    if(col==='A'){ // Off side / outside off stump
+        if(isShort) return isFast?'Duck or Leave':'Cut Shot';
+        if(isFull) return isSlow?'Off Drive or Sweep':'Cover Drive or Off Drive';
+        if(height==='low') return isSlow?'Sweep or Forward Defensive':'Cover Drive';
+        return 'Cover Drive';
+    }
+    if(col==='B'){ // Middle stump
+        if(isShort) return isFast?'Duck / Sway':'Pull Shot';
+        if(isFull) return isSlow?'Straight Drive or Sweep':'Straight Drive';
+        if(height==='low') return isSlow?'Sweep':'Forward Defensive';
+        if(height==='medium') return 'Straight Drive or Flick';
+        return 'Pull Shot';
+    }
+    if(col==='C'){ // Leg side / outside leg stump
+        if(isShort) return isFast?'Leg Side Sway':'Hook Shot';
+        if(isFull) return isSlow?'Sweep or On Drive':'On Drive or Flick';
+        if(height==='low') return isSlow?'Sweep':'Leg Glance';
+        if(height==='medium') return 'Flick off Hips';
+        return 'Hook Shot';
+    }
+    return 'Forward Defensive';
 }
 
 function clearGrid(){
