@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cricket Reaction Grid Pro</title>
+<style>
+body{
+    font-family:Arial,Helvetica,sans-serif;
+    text-align:center;
+    background:#0f172a;
+    color:#fff;
+    margin:0;
+    padding:20px;
+}
+h1{margin-bottom:10px}
+#controls{margin-bottom:10px}
+#grid{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    grid-template-rows:repeat(3,1fr);
+    gap:8px;
+    justify-content:center;
+    margin:20px auto;
+    max-width:500px;
+}
+.cell{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border:2px solid #334155;
+    border-radius:8px;
+    font-size:4vw;
+    background:#1e293b;
+    transition:.2s;
+    font-weight:bold;
+    aspect-ratio:1/1;
+}
+.player{background:#3b82f6;}
+.low{background:#facc15;color:#000;box-shadow:0 0 20px #facc15;}
+.medium{background:#fb923c;color:#000;box-shadow:0 0 20px #fb923c;}
+.high{background:#ef4444;color:#fff;box-shadow:0 0 20px #ef4444;}
+select,button,input{
+    padding:8px 12px;
+    margin:5px;
+    border-radius:6px;
+    border:none;
+    font-size:14px;
+}
+button{background:#f97316;color:#fff;cursor:pointer;}
+#counter{margin-top:10px;font-size:18px;font-weight:bold;}
+@media(max-width:500px){
+    #grid{max-width:90vw}
+    .cell{font-size:6vw}
+}
+</style>
+</head>
+<body>
+<h1>Cricket Practice Reaction Grid</h1>
+<div id='controls'>
+Speed:
+<select id='speed'>
+<option value='3000'>Slow</option>
+<option value='2000'>Medium</option>
+<option value='1000'>Fast</option>
+<option value='500'>Super Fast</option>
+<option value='random'>Random</option>
+</select>
+Balls:
+<input type='number' id='ballCount' value='50' min='1' style='width:70px'>
+<button onclick='startSession()'>Start Session</button>
+<button onclick='stopSession()'>Stop Session</button>
+</div>
+<div id='counter'></div>
+<div id='grid'></div>
+
+<script>
+const cols=['A','B','C'];
+const rows=['1','2','3'];
+const grid=document.getElementById('grid');
+let cells={};
+
+// Create grid cells
+rows.forEach(r=>{
+    cols.forEach(c=>{
+        let id=c+r;
+        let div=document.createElement('div');
+        div.className='cell';
+        div.id=id;
+        div.innerText=id;
+        if(id==='B1') div.classList.add('player');
+        grid.appendChild(div);
+        cells[id]=div;
+    });
+});
+
+let interval=null;
+
+function getSpeed(){
+    let s=document.getElementById('speed').value;
+    if(s==='random'){
+        let speeds=[500,1000,2000,3000];
+        return speeds[Math.floor(Math.random()*speeds.length)];
+    }
+    return parseInt(s);
+}
+
+function startSession(){
+    clearInterval(interval);
+    let total=parseInt(document.getElementById('ballCount').value);
+    let delivered=0;
+    document.getElementById('counter').innerText='Balls Remaining: '+total;
+    interval=setInterval(()=>{
+        if(delivered>=total){
+            clearInterval(interval);
+            clearGrid();
+            document.getElementById('counter').innerText='Session Complete';
+            return;
+        }
+        deliverBall();
+        delivered++;
+        document.getElementById('counter').innerText='Balls Remaining: '+(total-delivered);
+    }, getSpeed());
+}
+
+function stopSession(){
+    clearInterval(interval);
+    clearGrid();
+    document.getElementById('counter').innerText='Session Stopped';
+}
+
+function deliverBall(){
+    clearGrid();
+    let options=Object.keys(cells).filter(c=>c!=='B1');
+    let randomCell=options[Math.floor(Math.random()*options.length)];
+    let heights=['low','medium','high'];
+    let h=heights[Math.floor(Math.random()*heights.length)];
+    cells[randomCell].classList.add(h);
+    cells[randomCell].innerText=h.toUpperCase();
+}
+
+function clearGrid(){
+    Object.values(cells).forEach(c=>{
+        c.className='cell';
+        c.innerText=c.id;
+        if(c.id==='B1') c.classList.add('player');
+    });
+}
+</script>
+</body>
+</html>
